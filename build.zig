@@ -2,7 +2,6 @@ const version = @import("builtin").zig_version;
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -17,41 +16,33 @@ pub fn build(b: *std.Build) void {
     exe.linkSystemLibrary("rocksdb");
 
     if (@hasDecl(@TypeOf(exe.*), "addLibraryPath")) {
-	exe.addLibraryPath(.{ .cwd_relative = "./rocksdb" });
+        exe.addLibraryPath(.{ .cwd_relative = "./rocksdb" });
         exe.addIncludePath(.{ .cwd_relative = "./rocksdb/include" });
     } else {
         exe.addLibPath(.{ .path = "rocksdb" });
         exe.addIncludeDir(.{ .cwd_relative = "./rocksdb/include" });
     }
 
-    exe.setOutputDir(".");
-
-    if (exe.target.isDarwin()) {
-        b.installFile("./rocksdb/librocksdb.7.8.dylib", "../librocksdb.7.8.dylib");
-        exe.addRPath(".");
-    }
-
-    exe.install();
+    b.installArtifact(exe);
 
     // And also the key-value store
-    const kvExe = b.addExecutable("kv", "rocksdb.zig");
+    const kvExe = b.addExecutable(.{
+        .name = "kv",
+        .root_source_file = .{ .cwd_relative = "rocksdb.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+
     kvExe.linkLibC();
-    kvExe.linkSystemLibraryName("rocksdb");
+    kvExe.linkSystemLibrary("rocksdb");
 
     if (@hasDecl(@TypeOf(kvExe.*), "addLibraryPath")) {
-        kvExe.addLibraryPath("./rocksdb");
-        kvExe.addIncludePath("./rocksdb/include");
+        kvExe.addLibraryPath(.{ .cwd_relative = "./rocksdb" });
+        kvExe.addIncludePath(.{ .cwd_relative = "./rocksdb/include" });
     } else {
-        kvExe.addLibPath("./rocksdb");
-        kvExe.addIncludeDir("./rocksdb/include");
+        kvExe.addLibPath(.{ .path = "rocksdb" });
+        kvExe.addIncludeDir(.{ .cwd_relative = "./rocksdb/include" });
     }
 
-    kvExe.setOutputDir(".");
-
-    if (kvExe.target.isDarwin()) {
-        b.installFile("./rocksdb/librocksdb.7.8.dylib", "../librocksdb.7.8.dylib");
-        kvExe.addRPath(".");
-    }
-
-    kvExe.install();
+    b.installArtifact(kvExe);
 }

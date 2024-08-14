@@ -18,14 +18,14 @@ pub const RocksDB = struct {
     // Similar to ownString but for strings that are zero delimited,
     // drops the zero.
     fn ownZeroString(self: RocksDB, zstr: [*:0]u8) []u8 {
-        const spanned = std.mem.span(zstr);
+        const spanned = std.mem.sliceTo(zstr,0);
         const result = self.allocator.alloc(u8, spanned.len) catch unreachable;
         std.mem.copy(u8, result, spanned);
         std.heap.c_allocator.free(zstr);
         return result;
     }
 
-    // TODO: replace std.mem.span(errStr) with ownZeroString()
+    // TODO: replace std.mem.sliceTo(errStr,0) with ownZeroString()
 
     pub fn open(allocator: std.mem.Allocator, dir: []const u8) union(enum) { val: RocksDB, err: []u8 } {
         const options: ?*rdb.rocksdb_options_t = rdb.rocksdb_options_create();
@@ -34,7 +34,7 @@ pub const RocksDB = struct {
         const db = rdb.rocksdb_open(options, dir.ptr, &err);
         const r = RocksDB{ .db = db.?, .allocator = allocator };
         if (err) |errStr| {
-            return .{ .err = std.mem.span(errStr) };
+            return .{ .err = std.mem.sliceTo(errStr,0) };
         }
         return .{ .val = r };
     }
@@ -56,7 +56,7 @@ pub const RocksDB = struct {
             &err,
         );
         if (err) |errStr| {
-            return std.mem.span(errStr);
+            return std.mem.sliceTo(errStr,0);
         }
 
         return null;
@@ -75,7 +75,7 @@ pub const RocksDB = struct {
             &err,
         );
         if (err) |errStr| {
-            return .{ .err = std.mem.span(errStr) };
+            return .{ .err = std.mem.sliceTo(errStr,0) };
         }
         if (v == 0) {
             return .{ .not_found = true };
@@ -142,7 +142,7 @@ pub const RocksDB = struct {
         var err: ?[*:0]u8 = null;
         rdb.rocksdb_iter_get_error(it.iter, &err);
         if (err) |errStr| {
-            return .{ .err = std.mem.span(errStr) };
+            return .{ .err = std.mem.sliceTo(errStr,0) };
         }
 
         if (prefix.len > 0) {
@@ -185,15 +185,15 @@ pub fn main() !void {
     while (args.next()) |arg| {
         if (std.mem.eql(u8, arg, "set")) {
             command = "set";
-            key = std.mem.span(args.next().?);
-            value = std.mem.span(args.next().?);
+            key = std.mem.sliceTo(args.next().?,0);
+            value = std.mem.sliceTo(args.next().?,0);
         } else if (std.mem.eql(u8, arg, "get")) {
             command = "get";
-            key = std.mem.span(args.next().?);
+            key = std.mem.sliceTo(args.next().?,0);
         } else if (std.mem.eql(u8, arg, "list")) {
             command = "lst";
             if (args.next()) |argNext| {
-                key = std.mem.span(argNext);
+                key = std.mem.sliceTo(argNext,0);
             }
         } else {
             std.debug.print("Must specify command (get, set, or list). Got: '{s}'.\n", .{arg});
