@@ -70,7 +70,7 @@ pub const Parser = struct {
             expectTokenKind(tokens, i, Token.Kind.plus_operator) or
             expectTokenKind(tokens, i, Token.Kind.concat_operator))
         {
-            var newE = ExpressionAST{
+            const newE = ExpressionAST{
                 .binary_operation = BinaryOperationAST{
                     .operator = tokens[i],
                     .left = self.allocator.create(ExpressionAST) catch return .{
@@ -103,7 +103,7 @@ pub const Parser = struct {
 
         fn print(self: SelectAST) void {
             std.debug.print("SELECT\n", .{});
-            for (self.columns) |column, i| {
+            for (self.columns, 0..) |column, i| {
                 std.debug.print("  ", .{});
                 column.print();
                 if (i < self.columns.len - 1) {
@@ -203,7 +203,7 @@ pub const Parser = struct {
 
         fn print(self: CreateTableAST) void {
             std.debug.print("CREATE TABLE {s} (\n", .{self.table.string()});
-            for (self.columns) |column, i| {
+            for (self.columns, 0..) |column, i| {
                 std.debug.print(
                     "  {s} {s}",
                     .{ column.name.string(), column.kind.string() },
@@ -292,7 +292,7 @@ pub const Parser = struct {
 
         fn print(self: InsertAST) void {
             std.debug.print("INSERT INTO {s} VALUES (", .{self.table.string()});
-            for (self.values) |value, i| {
+            for (self.values, 0..) |value, i| {
                 value.print();
                 if (i < self.values.len - 1) {
                     std.debug.print(", ", .{});

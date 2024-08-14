@@ -1,17 +1,27 @@
 const version = @import("builtin").zig_version;
 const std = @import("std");
 
-pub fn build(b: *std.build.Builder) void {
-    const exe = b.addExecutable("main", "main.zig");
+pub fn build(b: *std.Build) void {
+
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
+
+    const exe = b.addExecutable(.{
+        .name = "main",
+        .root_source_file = .{ .cwd_relative = "main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+
     exe.linkLibC();
-    exe.linkSystemLibraryName("rocksdb");
+    exe.linkSystemLibrary("rocksdb");
 
     if (@hasDecl(@TypeOf(exe.*), "addLibraryPath")) {
-        exe.addLibraryPath("./rocksdb");
-        exe.addIncludePath("./rocksdb/include");
+	exe.addLibraryPath(.{ .cwd_relative = "./rocksdb" });
+        exe.addIncludePath(.{ .cwd_relative = "./rocksdb/include" });
     } else {
-        exe.addLibPath("./rocksdb");
-        exe.addIncludeDir("./rocksdb/include");
+        exe.addLibPath(.{ .path = "rocksdb" });
+        exe.addIncludeDir(.{ .cwd_relative = "./rocksdb/include" });
     }
 
     exe.setOutputDir(".");

@@ -10,7 +10,7 @@ pub const RocksDB = struct {
     // allocator owns and then free the string.
     fn ownString(self: RocksDB, string: []u8) []u8 {
         const result = self.allocator.alloc(u8, string.len) catch unreachable;
-        std.mem.copy(u8, result, string);
+        @memcpy(result, string);
         std.heap.c_allocator.free(string);
         return result;
     }
@@ -18,7 +18,7 @@ pub const RocksDB = struct {
     // Similar to ownString but for strings that are zero delimited,
     // drops the zero.
     fn ownZeroString(self: RocksDB, zstr: [*:0]u8) []u8 {
-        var spanned = std.mem.span(zstr);
+        const spanned = std.mem.span(zstr);
         const result = self.allocator.alloc(u8, spanned.len) catch unreachable;
         std.mem.copy(u8, result, spanned);
         std.heap.c_allocator.free(zstr);
@@ -28,11 +28,11 @@ pub const RocksDB = struct {
     // TODO: replace std.mem.span(errStr) with ownZeroString()
 
     pub fn open(allocator: std.mem.Allocator, dir: []const u8) union(enum) { val: RocksDB, err: []u8 } {
-        var options: ?*rdb.rocksdb_options_t = rdb.rocksdb_options_create();
+        const options: ?*rdb.rocksdb_options_t = rdb.rocksdb_options_create();
         rdb.rocksdb_options_set_create_if_missing(options, 1);
         var err: ?[*:0]u8 = null;
-        var db = rdb.rocksdb_open(options, dir.ptr, &err);
-        var r = RocksDB{ .db = db.?, .allocator = allocator };
+        const db = rdb.rocksdb_open(options, dir.ptr, &err);
+        const r = RocksDB{ .db = db.?, .allocator = allocator };
         if (err) |errStr| {
             return .{ .err = std.mem.span(errStr) };
         }
@@ -44,7 +44,7 @@ pub const RocksDB = struct {
     }
 
     pub fn set(self: RocksDB, key: []const u8, value: []const u8) ?[]u8 {
-        var writeOptions = rdb.rocksdb_writeoptions_create();
+        const writeOptions = rdb.rocksdb_writeoptions_create();
         var err: ?[*:0]u8 = null;
         rdb.rocksdb_put(
             self.db,
@@ -63,7 +63,7 @@ pub const RocksDB = struct {
     }
 
     pub fn get(self: RocksDB, key: []const u8) union(enum) { val: []u8, err: []u8, not_found: bool } {
-        var readOptions = rdb.rocksdb_readoptions_create();
+        const readOptions = rdb.rocksdb_readoptions_create();
         var valueLength: usize = 0;
         var err: ?[*:0]u8 = null;
         var v = rdb.rocksdb_get(
@@ -131,7 +131,7 @@ pub const RocksDB = struct {
     };
 
     pub fn iter(self: RocksDB, prefix: []const u8) union(enum) { val: Iter, err: []u8 } {
-        var readOptions = rdb.rocksdb_readoptions_create();
+        const readOptions = rdb.rocksdb_readoptions_create();
         var it = Iter{
             .iter = undefined,
             .first = true,
@@ -202,7 +202,7 @@ pub fn main() !void {
     }
 
     if (std.mem.eql(u8, command, "set")) {
-        var setErr = db.set(key, value);
+        const setErr = db.set(key, value);
         if (setErr) |err| {
             std.debug.print("Error setting key: {s}.\n", .{err});
             return;
@@ -217,7 +217,7 @@ pub fn main() !void {
             .not_found => std.debug.print("Key not found.\n", .{}),
         }
     } else {
-        var prefix = key;
+        const prefix = key;
         switch (db.iter(prefix)) {
             .err => |err| std.debug.print("Error getting iterator: {s}.\n", .{err}),
             .val => |iter| {

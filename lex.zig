@@ -128,7 +128,7 @@ fn asciiCaseInsensitiveEqual(left: String, right: String) bool {
         min = right;
     }
 
-    for (min) |_, i| {
+    for (min,0..) |_,i| {
         var l = left[i];
         if (l >= 97 and l <= 122) {
             l = l - 32;
@@ -179,7 +179,7 @@ fn lexKeyword(source: String, index: usize) struct { nextPosition: usize, token:
 }
 
 fn lexInteger(source: String, index: usize) struct { nextPosition: usize, token: ?Token } {
-    var start = index;
+    const start = index;
     var end = index;
     var i = index;
     while (source[i] >= '0' and source[i] <= '9') {
@@ -209,7 +209,7 @@ fn lexString(source: String, index: usize) struct { nextPosition: usize, token: 
     }
     i = i + 1;
 
-    var start = i;
+    const start = i;
     var end = i;
     while (source[i] != '\'') {
         end = end + 1;
@@ -236,7 +236,7 @@ fn lexString(source: String, index: usize) struct { nextPosition: usize, token: 
 }
 
 fn lexIdentifier(source: String, index: usize) struct { nextPosition: usize, token: ?Token } {
-    var start = index;
+    const start = index;
     var end = index;
     var i = index;
     while ((source[i] >= 'a' and source[i] <= 'z') or

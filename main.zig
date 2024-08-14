@@ -55,7 +55,7 @@ pub fn main() !void {
     defer file.close();
 
     const file_size = try file.getEndPos();
-    var prog = try allocator.alloc(u8, file_size);
+    const prog = try allocator.alloc(u8, file_size);
 
     _ = try file.read(prog);
 
@@ -92,7 +92,7 @@ pub fn main() !void {
     }
 
     var db: RocksDB = undefined;
-    var dataDirectory = std.mem.span(std.os.argv[databaseArg]);
+    const dataDirectory = std.mem.span(std.os.argv[databaseArg]);
     switch (RocksDB.open(allocator, dataDirectory)) {
         .err => |err| {
             std.debug.print("Failed to open database: {s}", .{err});

@@ -36,7 +36,7 @@ pub const Executor = struct {
 
                 if (bin_op.operator.kind == .equal_operator) {
                     // Cast dissimilar types to serde
-                    if (@enumToInt(left) != @enumToInt(right)) {
+                    if (@intFromEnum(left) != @intFromEnum(right)) {
                         var leftBuf = std.ArrayList(u8).init(self.allocator);
                         left.asString(&leftBuf) catch unreachable;
                         left = Storage.Value{ .string_value = leftBuf.items };
@@ -89,7 +89,7 @@ pub const Executor = struct {
         // Now validate and store requested fields
         var requestedFields = std.ArrayList(String).init(self.allocator);
         for (s.columns) |requestedColumn| {
-            var fieldName = switch (requestedColumn) {
+            const fieldName = switch (requestedColumn) {
                 .literal => |lit| switch (lit.kind) {
                     .identifier => lit.string(),
                     // TODO: give reasonable names
@@ -148,10 +148,10 @@ pub const Executor = struct {
     }
 
     fn executeInsert(self: Executor, i: Parser.InsertAST) QueryResponseResult {
-        var emptyRow = Storage.Row.init(self.allocator, undefined);
+        const emptyRow = Storage.Row.init(self.allocator, undefined);
         var row = Storage.Row.init(self.allocator, undefined);
         for (i.values) |v| {
-            var exp = self.executeExpression(v, emptyRow);
+            const exp = self.executeExpression(v, emptyRow);
             row.append(exp) catch return .{ .err = "Could not allocate for cell" };
         }
 
@@ -177,7 +177,7 @@ pub const Executor = struct {
             };
         }
 
-        var table = Storage.Table{
+        const table = Storage.Table{
             .name = c.table.string(),
             .columns = columns.items,
             .types = types.items,
