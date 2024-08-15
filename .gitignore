@@ -7,3 +7,5 @@ zig-out
 main
 kv
 data
+.vim*
+sql*.txt
